@@ -2,8 +2,9 @@ import urllib
 import urllib2
 import re
 import webbrowser
-from bs4 import BeautifulSoup
+import time
 import Tkinter as tk
+from bs4 import BeautifulSoup
 from py_ms_cognitive import PyMsCognitiveWebSearch
     
 API_KEY = "f696d60cdc8a4cc68a8f39f33bb150be"
@@ -23,45 +24,51 @@ freq_array = []
 url_array = []
 
 while x<limit:
-    word_freq = [] 
-   
-    dirty_url = results[x].url[20:]
-
-    clean_url = dirty_url[dirty_url.find("http"):]
-    clean_url = clean_url[:clean_url.find("&p=DevEx")]
-    clean_url = urllib.unquote(clean_url)
-
     try:
-        response = urllib2.urlopen(clean_url)
-    except urllib2.HTTPError:
-        print "Failed to retrieve data from", clean_url
+        word_freq = [] 
+        print results[x].url
         
-    url_array.append(clean_url)
+        dirty_url = results[x].url[20:]
 
-    html = response.read()   
-    soup = BeautifulSoup(html,'html.parser').get_text()
-    soup = re.sub(r"\s+", ' ', soup)
+        clean_url = dirty_url[dirty_url.find("http"):]
+        clean_url = clean_url[:clean_url.find("&p=DevEx")]
+        clean_url = urllib.unquote(clean_url)
 
-    words = soup.split()
-
-    count = 0
-
-    for sWord in search_array:
-        count = 0
-        for word in words:
-            if word.upper()[:len(sWord)] == sWord.upper():
-                count = count + 1
-        #print sWord + " : " + str(count) + "/" + str(len(words))
         try:
-            word_freq.append(float(count)/float(len(words)))
-        except ZeroDivisionError:
-            word_freq.append(0)
-    if len(word_freq) == 1:
-        word_freq.append(0.5)
-    if len(word_freq) == 2:
-        word_freq.append(0.5)
-    freq_array.append(word_freq) 
-    x = x+1
+            response = urllib2.urlopen(clean_url)
+        except urllib2.HTTPError:
+            response = urllib2.urlopen("http://blank.org/")
+            print "Failed to retrieve data from", clean_url
+            
+        url_array.append(clean_url)
+
+        html = response.read()   
+        soup = BeautifulSoup(html,'html.parser').get_text()
+        soup = re.sub(r"\s+", ' ', soup)
+
+        words = soup.split()
+
+        count = 0
+
+        for sWord in search_array:
+            count = 0
+            for word in words:
+                if word.upper()[:len(sWord)] == sWord.upper():
+                    count = count + 1
+            #print sWord + " : " + str(count) + "/" + str(len(words))
+            try:
+                word_freq.append(float(count)/float(len(words)))
+            except ZeroDivisionError:
+                word_freq.append(0)
+        if len(word_freq) == 1:
+            word_freq.append(0.5)
+        if len(word_freq) == 2:
+            word_freq.append(0.5)
+        freq_array.append(word_freq) 
+        x = x+1
+    except IndexError:
+        print "Less than 10 results"
+        limit = x
 
 xaxis = 0
 yaxis = 0
@@ -120,6 +127,7 @@ def callback(event):
 C.bind("<Key>", key)
 C.bind("<Button-1>", callback)
 top.mainloop()
+time.sleep(5)
 
 
 
